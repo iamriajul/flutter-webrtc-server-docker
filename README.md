@@ -11,7 +11,7 @@ version: '3.7'
 
 services:
   agora-token:
-    image: iamriajul/flutter-webrtc-server:latest # or specify a tag like iamriajul/flutter-webrtc-server:1.4.2
+    image: iamriajul/flutter-webrtc-server:latest # or specify a tag like iamriajul/flutter-webrtc-server:1.0
     ports:
       - 8086:8086 # the image exposes port 8086 for WebSocket Server.
       - 19302:19302 # the image exposes port 19302 for TURN/STUN Server.
