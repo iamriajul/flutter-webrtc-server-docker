@@ -13,13 +13,18 @@ services:
   agora-token:
     image: iamriajul/flutter-webrtc-server:latest # or specify a tag like iamriajul/flutter-webrtc-server:1.4.2
     ports:
-      - 8080:8080 # the image exposes port 8080
+      - 8086:8086 # the image exposes port 8086 for WebSocket Server.
+      - 19302:19302 # the image exposes port 19302 for TURN/STUN Server.
     environment:
-      - APP_ID=your-app-id
-      - APP_CERTIFICATE=your-app-certificate
-      - CORS_ALLOW_ORIGIN=your-allowed-origins
-      # Note SERVER_PORT, PORT are not supported, as the image exposes port 8080
-      # Passing these env variables will not work
+      # Optional Environment Variables
+      - DOMAIN=demo.cloudwebrtc.com
+      - CERT=configs/certs/cert.pem
+      - KEY=configs/certs/key.pem
+      - BIND=0.0.0.0
+      - HTML_ROOT=web
+      - PUBLIC_IP=127.0.0.1
+      - REALM=flutter-webrtc
+      # Note: PORT, TURN_PORT are fixed and cannot be changed by environment variables.
     networks:
       - my-network
 ```

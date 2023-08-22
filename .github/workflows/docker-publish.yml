@@ -24,12 +24,11 @@ jobs:
       - name: Copy our Dockerfile
         run: cp Dockerfile flutter-webrtc-server/
 
-      - name: Ensure ./cmd/main.go exists.
-        working-directory: flutter-webrtc-server
+      - name: Ensure ./configs/main.go exists
         run: |
-          if [ ! -f ./cmd/main.go ]; then
-            mkdir -p ./cmd
-            cp ./main.go ./cmd/main.go
+          if [ ! -f ./flutter-webrtc-server/configs/main.go ]; then
+            mkdir -p ./flutter-webrtc-server/configs
+            cp ./configs/main.go ./flutter-webrtc-server/configs/main.go
           fi
 
       - name: Set up QEMU
@@ -55,6 +54,7 @@ jobs:
           push: true
           tags: iamriajul/flutter-webrtc-server:${{ env.RELEASE_VERSION }},iamriajul/flutter-webrtc-server:latest
           platforms: linux/amd64,linux/arm64
+
   update-readme:
     runs-on: ubuntu-latest
     needs: build-and-push
