@@ -1,0 +1,69 @@
+name: Create Release Automatic
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 10 * * *'
+
+jobs:
+  find:
+    runs-on: ubuntu-latest
+    outputs:
+      RELEASE_VERSION: ${{ steps.get_tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Checkout the flutter-webrtc-server repo
+        uses: actions/checkout@v2
+        with:
+          repository: flutter-webrtc/flutter-webrtc-server
+          path: flutter-webrtc-server
+          fetch-depth: 0
+
+      - name: Get first stable tag (eg v1.0.0) which is not used by this repository
+        id: get_tag
+        run: |
+            for tag in $(git -C flutter-webrtc-server tag -l --sort=creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$'); do
+                if ! git tag -l | grep -q $tag; then
+                    echo "Found tag $tag"
+                    echo "tag=$tag" >> "$GITHUB_OUTPUT"
+                    exit 0
+                fi
+            done
+            echo "No tag found"
+            exit 0
+
+  create:
+    runs-on: ubuntu-latest
+    needs: find
+    if: needs.find.outputs.RELEASE_VERSION
+    steps:
+      - name: Get Github Release Data
+        id: release_data
+        uses: cardinalby/git-get-release-action@1.2.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          repo: flutter-webrtc/flutter-webrtc-server
+          tag: ${{ needs.find.outputs.RELEASE_VERSION }}
+
+      # Using PAT (Personal Access Token) instead of GITHUB_TOKEN because GITHUB_TOKEN doesn't have permission to create release
+      # And also if we use GITHUB_TOKEN, it will not trigger our other workflow (docker-publish.yml).
+      # GitHub Actions prevent trigger workflow using GITHUB_TOKEN, to avoid infinite loop.
+      - name: Create a release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+        with:
+          tag_name: ${{ needs.find.outputs.RELEASE_VERSION }}
+          release_name: ${{ needs.find.outputs.RELEASE_VERSION }}
+          body: |
+            ${{ steps.release_data.outputs.body }}
+          draft: false
+          prerelease: false
+
+
+

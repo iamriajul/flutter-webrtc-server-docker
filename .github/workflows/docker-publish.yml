@@ -1,0 +1,91 @@
+name: Docker Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Checkout the flutter-webrtc-server repo
+        uses: actions/checkout@v2
+        with:
+          repository: flutter-webrtc/flutter-webrtc-server
+          ref: ${{ env.RELEASE_VERSION }}
+          path: flutter-webrtc-server
+
+      - name: Copy our Dockerfile
+        run: cp Dockerfile flutter-webrtc-server/
+
+      - name: Ensure ./cmd/main.go exists.
+        working-directory: flutter-webrtc-server
+        run: |
+          if [ ! -f ./cmd/main.go ]; then
+            mkdir -p ./cmd
+            cp ./main.go ./cmd/main.go
+          fi
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Remove the version prefix from the tag, eg: v1.0.0 -> 1.0.0
+      - name: Docker Tag
+        run: echo "RELEASE_VERSION=${RELEASE_VERSION#v}" >> $GITHUB_ENV
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: flutter-webrtc-server
+          push: true
+          tags: iamriajul/flutter-webrtc-server:${{ env.RELEASE_VERSION }},iamriajul/flutter-webrtc-server:latest
+          platforms: linux/amd64,linux/arm64
+  update-readme:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the
+      # added or changed files to the repository.
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: master
+
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      # Remove the version prefix from the tag, eg: v1.0.0 -> 1.0.0
+      - name: Docker Tag
+        run: echo "RELEASE_VERSION=${RELEASE_VERSION#v}" >> $GITHUB_ENV
+
+      # Replace version iamriajul/flutter-webrtc-server:1.0.0 with iamriajul/flutter-webrtc-server:${RELEASE_VERSION}
+      - name: Update README.md
+        run: |
+            sed -i "s#iamriajul/flutter-webrtc-server:[0-9]\+\.[0-9]\+\.[0-9]\+#iamriajul/flutter-webrtc-server:${RELEASE_VERSION}#g" README.md
+
+      # Commit all changed files back to the repository
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          branch: master
+          commit_message: "Update README.md"
+          commit_options: '--no-verify --signoff'
+          commit_user_name: "iamriajul"
+          commit_user_email: "kmriajulislami@gmail.com"
+          commit_author: "iamriajul <kmriajulislami@gmail.com>"
+
