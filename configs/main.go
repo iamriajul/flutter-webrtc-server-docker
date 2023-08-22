@@ -1,6 +1,9 @@
 package main
 
-import "os"
+import (
+	"gopkg.in/ini.v1"
+	"os"
+)
 
 /*
 The purpose of program to convert ENV variables to config.ini
