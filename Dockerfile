@@ -22,8 +22,6 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -
 # Create a minimal container to run a Golang static binary
 FROM --platform=${TARGETPLATFORM:-linux/amd64} scratch
 
-ENV GIN_MODE=release
-
 # Copy our static executable.
 COPY --from=builder /go/bin/server /server
 COPY --from=builder /go/bin/configs /configs
