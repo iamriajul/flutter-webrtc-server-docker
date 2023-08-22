@@ -16,19 +16,9 @@ jobs:
 
       - name: Checkout the flutter-webrtc-server repo
         uses: actions/checkout@v2
-        id: flutter-webrtc-server-checkout-first
-        continue-on-error: true
         with:
           repository: flutter-webrtc/flutter-webrtc-server
           ref: ${{ env.RELEASE_VERSION }}
-          path: flutter-webrtc-server
-
-      - name: Checkout the flutter-webrtc-server repo - 2nd attempt
-        if: ${{ steps.flutter-webrtc-server-checkout-first.outcome == 'failure' }}
-        uses: actions/checkout@v2
-        with:
-          repository: flutter-webrtc/flutter-webrtc-server
-          ref: ${{ env.RELEASE_VERSION#v }}
           path: flutter-webrtc-server
 
       - name: Copy our Dockerfile
@@ -55,7 +45,12 @@ jobs:
 
       # Remove the version prefix from the tag, eg: v1.0.0 -> 1.0.0
       - name: Docker Tag
-        run: echo "RELEASE_VERSION=${RELEASE_VERSION#v}" >> $GITHUB_ENV
+        run: |
+          if [[ "${RELEASE_VERSION}" == "v"* ]]; then
+            echo "RELEASE_VERSION=${RELEASE_VERSION#v}" >> $GITHUB_ENV
+          else
+            echo "RELEASE_VERSION=${RELEASE_VERSION}" >> $GITHUB_ENV
+          fi
 
       - name: Build and push
         uses: docker/build-push-action@v4
