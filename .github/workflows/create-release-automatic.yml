@@ -22,18 +22,12 @@ jobs:
           path: flutter-webrtc-server
           fetch-depth: 0
 
-      - name: Get first stable tag (eg v1.0.0 or 1.0.0) which is not used by this repository
+      - name: Get first tag which is not used by this repository
         id: get_tag
         run: |
-            for tag in $(git -C flutter-webrtc-server tag -l --sort=creatordate | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$'); do
+            for tag in $(git -C flutter-webrtc-server tag -l --sort=creatordate); do
                 if ! git tag -l | grep -q $tag; then
                     echo "Found tag $tag"
-                    
-                    # If tag does not starts with v, then add v prefix
-                    if [[ ! $tag =~ ^v ]]; then
-                        tag="v$tag"
-                    fi
-                    
                     echo "tag=$tag" >> "$GITHUB_OUTPUT"
                     exit 0
                 fi
