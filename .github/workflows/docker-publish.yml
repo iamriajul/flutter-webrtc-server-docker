@@ -16,9 +16,19 @@ jobs:
 
       - name: Checkout the flutter-webrtc-server repo
         uses: actions/checkout@v2
+        id: flutter-webrtc-server-checkout-first
+        continue-on-error: true
         with:
           repository: flutter-webrtc/flutter-webrtc-server
           ref: ${{ env.RELEASE_VERSION }}
+          path: flutter-webrtc-server
+
+      - name: Checkout the flutter-webrtc-server repo - 2nd attempt
+        if: ${{ steps.flutter-webrtc-server-checkout-first.outcome == 'failure' }}
+        uses: actions/checkout@v2
+        with:
+          repository: flutter-webrtc/flutter-webrtc-server
+          ref: ${{ env.RELEASE_VERSION#v }}
           path: flutter-webrtc-server
 
       - name: Copy our Dockerfile

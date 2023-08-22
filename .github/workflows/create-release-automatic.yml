@@ -27,7 +27,7 @@ jobs:
         run: |
             for tag in $(git -C flutter-webrtc-server tag -l --sort=creatordate | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$'); do
                 if ! git tag -l | grep -q $tag; then
-                    echo "Found tag $tag"
+                    echo "Found tag $tag"  
                     echo "tag=$tag" >> "$GITHUB_OUTPUT"
                     exit 0
                 fi
