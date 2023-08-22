@@ -44,13 +44,10 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # Remove the version prefix from the tag, eg: v1.0.0 -> 1.0.0
+      # Only if the tag starts with a v
       - name: Docker Tag
-        run: |
-          if [[ "${RELEASE_VERSION}" == "v"* ]]; then
-            echo "RELEASE_VERSION=${RELEASE_VERSION#v}" >> $GITHUB_ENV
-          else
-            echo "RELEASE_VERSION=${RELEASE_VERSION}" >> $GITHUB_ENV
-          fi
+        if: startsWith(env.RELEASE_VERSION, 'v')
+        run: echo "RELEASE_VERSION=${RELEASE_VERSION#v}" >> $GITHUB_ENV
 
       - name: Build and push
         uses: docker/build-push-action@v4
